@@ -240,20 +240,24 @@ class xoctScaMigration {
 
 			//permissions
 			$parent_obj = $ilObjOpenCast->getParentCourseOrGroup();
-			$roles = ($parent_obj instanceof ilObjCourse) ? $parent_obj->getDefaultCourseRoles() : $parent_obj->getDefaultGroupRoles();
 
-			foreach ($roles as $role_id) {
-				$role_ops = $this->rbac_review->getRoleOperationsOnObject($role_id, $rec['ref_id']);
+            if($parent_obj) {
+                $roles = ($parent_obj instanceof ilObjCourse) ? $parent_obj->getDefaultCourseRoles() : $parent_obj->getDefaultGroupRoles();
 
-				// if the role has write permissions, the new permissions 'edit_videos' and 'upload' are also granted
-				if (in_array($this->ops_id_write, $role_ops)) {
-					$role_ops[] = $this->ops_id_edit_videos;
-					$role_ops[] = $this->ops_id_upload;
-				}
+                foreach ($roles as $role_id) {
+                    $role_ops = $this->rbac_review->getRoleOperationsOnObject($role_id, $rec['ref_id']);
 
-				$this->rbac_admin->revokePermission($ilObjOpenCast->getRefId(), $role_id);
-				$this->rbac_admin->grantPermission($role_id, $role_ops, $ilObjOpenCast->getRefId());
-			}
+                    // if the role has write permissions, the new permissions 'edit_videos' and 'upload' are also granted
+                    if (in_array($this->ops_id_write, $role_ops)) {
+                        $role_ops[] = $this->ops_id_edit_videos;
+                        $role_ops[] = $this->ops_id_upload;
+                    }
+
+                    $this->rbac_admin->revokePermission($ilObjOpenCast->getRefId(), $role_id);
+                    $this->rbac_admin->grantPermission($role_id, $role_ops, $ilObjOpenCast->getRefId());
+                }
+            }
+
 
 
 		}
