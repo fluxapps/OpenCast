@@ -1,8 +1,8 @@
 {
 	"metadata": {
-		"duration": 909.13,
-		"title": "HLS demo",
-		"preview": "https://repository.paellaplayer.upv.es/belmar-multiresolution/preview/presenter_cut.jpg",
+		"duration": 228,
+        "title": "HLS multiaudio",
+		"preview": "https://repository.paellaplayer.upv.es/hls-multiaudio/preview.jpg",
 		"related": [
 			{
 				"title":"Video with independent audio",
@@ -23,26 +23,15 @@
 			"sources": {
 				"hls": [
 					{
-						"src": "https://streaming.upv.es/paellaplayerdemo/_definst_/smil:belmar-hls2/belmar/playlist.m3u8",
-						"_src":"https://error.com/video/stream.m3u8",
+						"src": "https://repository.paellaplayer.upv.es/hls-multiaudio/presenter.m3u8",
+						"src_test": "https://bitmovin-a.akamaihd.net/content/sintel/hls/playlist.m3u8",
 						"mimetype": "video/mp4"
 					}
 				]
 			},
 			"preview": "",
-			"content":"presenter"
-		},
-		{
-			"sources": {
-				"hls": [
-					{
-						"src": "https://streaming.upv.es/paellaplayerdemo/_definst_/smil:belmar-hls2/belmar-presentation/playlist.m3u8",
-						"mimetype": "video/mp4"
-					}
-				]
-			},
-			"preview": "",
-			"content":"presentation"
+			"content":"presenter",
+			"role": "master"
 		}
 	],
 	"frameList": [
