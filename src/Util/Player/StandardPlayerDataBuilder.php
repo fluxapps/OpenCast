@@ -25,10 +25,15 @@ class StandardPlayerDataBuilder extends PlayerDataBuilder
      */
     public function buildStreamingData() : array
     {
+        // get all media url that match the given tags and flavors
         $media = $this->event->publications()->getPlayerPublications();
-        $media = array_values(array_filter($media, function (xoctMedia $medium) {
+	
+	    // do NOT filter only media with mimetype video/
+	    /*
+	    $media = array_values(array_filter($media, function (xoctMedia $medium) {
             return strpos($medium->getMediatype(), xoctMedia::MEDIA_TYPE_VIDEO) !== false;
-        }));
+        }))
+        */
 
         if (empty($media)) {
             throw new xoctException(xoctException::NO_STREAMING_DATA);
@@ -58,39 +63,103 @@ class StandardPlayerDataBuilder extends PlayerDataBuilder
     {
         $duration = 0;
         $streams = [];
-        $presenters = [];
-        $presentations = [];
+        $presentations_mp4 = [];
+        $presentations_hls= [];
+        $presentations_dash= [];
+        $presenters_mp4 = [];
+        $presenters_hls= [];
+        $presenters_dash= [];
 
+        // loop over all media file, which are filtered by tag or flavor in configuration file
         foreach ($media as $medium) {
+ 	  $master_playlist = $medium->is_master_playlist();
+	  if($master_playlist) {
             $duration = $duration ?: $medium->getDuration();
+            $mimetype = $medium->getMediatype();
+	    $ID       = $medium->getId();
             $source = $this->buildSource($medium, $duration);
-            if ($medium->getRole() == xoctMedia::ROLE_PRESENTATION) {
-                $presentations[$medium->getHeight()] = $source;
-            } else {
-                $presenters[$medium->getHeight()] = $source;
-            }
-        }
-
-        if (count($presenters) > 0) {
+            
+            // fill arrays for presentation and/or presenter media
+            // check mediatype and presenter/presentation to filter mp4, hls and dash
+	    if ($medium->getRole() == xoctMedia::ROLE_PRESENTER) {
+                if ($mimetype == "application/x-mpegURL") {
+                    $presenters_hls[$ID] = $source;
+		}
+                else if ($mimetype == "application/dash+xml") {
+                    $presenters_dash[$ID] = $source;
+		}
+		else if ($mimetype == "video/mp4") {
+                    $presenters_mp4[$ID] = $source;
+		}
+            } else if ($medium->getRole() == xoctMedia::ROLE_PRESENTATION) {
+                if ($mimetype == "application/x-mpegURL") {
+                    $presentations_hls[$ID] = $source;
+		}
+                else if ($mimetype == "application/dash+xml") {
+                    $presentations_dash[$ID] = $source;
+		}
+                else if ($mimetype == "video/mp4") {
+                    $presentations_mp4[$ID] = $source;
+		}
+            //} else if ($medium->getRole() == xoctMedia::ROLE_PRESENTATION_12 {;
+	    }
+	  }
+	}
+	
+        //if (count($presenters_mp4) > 0 || count($presenters_hls) > 0 || count($presenters_dash) > 0 ) { 
+	if (count($presenters_mp4) > 0 && count($presenters_hls))  { 
             $streams[] = [
-                "type" => xoctMedia::MEDIA_TYPE_VIDEO,
                 "content" => self::ROLE_MASTER,
                 "sources" => [
-                    "mp4" => array_values($presenters)
-                ],
+                     "hls" => array_values($presenters_hls),
+                     "mp4" => array_values($presenters_mp4)
+                 ],
             ];
-        }
-        
-        if (count($presentations) > 0) {
+	}
+        else if (count($presenters_hls) > 0 )  { 
             $streams[] = [
-                "type" => xoctMedia::MEDIA_TYPE_VIDEO,
-                "content" => self::ROLE_SLAVE,
-                "sources" => [
-                    "mp4" => array_values($presentations)
-                ],
+                "content" => self::ROLE_MASTER,
+                 "sources" => [
+                     "hls" => array_values($presenters_hls)
+                 ],
+            ];
+	}
+	else if (count($presenters_mp4) > 0 )  { 
+            $streams[] = [
+                "content" => self::ROLE_MASTER,
+                 "sources" => [
+                     "mp4" => array_values($presenters_mp4)
+                 ],
             ];
         }
 
+        //if (count($presentations_mp4)> 0 || count($presentations_hls) > 0 || count($presentations_dash) > 0 ) {
+        if (count($presentations_mp4) > 0 && count($presentations_hls) )  { 
+            $streams[] = [
+                "content" => self::ROLE_SLAVE,
+                "sources" => [
+                     "hls" => array_values($presentations_hls),
+                     "mp4" => array_values($presentations_mp4)
+                ],
+            ];
+	}
+	else if (count($presentations_hls) > 0 )  {
+            $streams[] = [
+                "content" => self::ROLE_SLAVE,
+                 "sources" => [
+                     "hls" => array_values($presentations_hls)
+                 ],
+            ];
+        }	
+        else if (count($presentations_mp4) > 0 )  {
+            $streams[] = [
+                "content" => self::ROLE_SLAVE,
+                 "sources" => [
+                     "mp4" => array_values($presentations_mp4)
+                 ],
+            ];
+        }
+       
         return array($duration, $streams);
     }
 
