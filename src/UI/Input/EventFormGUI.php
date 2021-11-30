@@ -218,7 +218,8 @@ class EventFormGUI extends ilPropertyFormGUI {
 				'ogg',
 				'flac',
 				'aiff',
-				'wav'
+				'wav',
+				'mkv'
 			) : array(
 				'mov',
 				'mp4',
@@ -227,6 +228,7 @@ class EventFormGUI extends ilPropertyFormGUI {
 				'mpeg',
 				'avi',
 				'mp4',
+				'mkv'
 			));
 			$te->setMimeTypes($allow_audio ? array(
 				'video/avi',
